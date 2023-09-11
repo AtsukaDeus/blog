@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import { useState } from 'react';
-import NavBar from '../components/navbar';
 
 export default function Publicar() {
 
@@ -11,9 +10,7 @@ let boton_style = "transition duration-300 ease-in-out hover:scale-105 mt-5 flex
 
 
 return (
-    <main className="bg-white flex min-h-screen flex-col items-center justify-between p-15">
 
-    <NavBar></NavBar>
     
     <div className='text-black mt-[150px] p-10 md:w-1/2 sm:w-1/2'>
         <form method='POST'>
@@ -33,13 +30,8 @@ return (
 
         </form>
 
-
-        
-
-
     </div>
     
-    
-    </main>
+
 )
 }
