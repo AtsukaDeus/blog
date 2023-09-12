@@ -6,6 +6,9 @@ import Link from 'next/link';
 
 export default function Home() {
 
+// Token:
+const token = localStorage.getItem('authToken');
+
 // control de navbar en pantallas pequeñas
 const [menuOpen, setMenuOpen] = useState(false);
 const toggleMenu = () => {setMenuOpen(!menuOpen);};
@@ -45,19 +48,22 @@ if (newConfirmPassword == '') setPasswordsMatch(true);
 };
 
 
+// Username y Password para el Loggeo:
+const [username_log, setUsername_log] = useState('');
+const [password_log, setPassword_log] = useState('');
 
-// Manejo de Loggeo:
+// Manejo del loggeo
+
 const manejarLogin = async (e: { preventDefault: () => void; }) => {
-e.preventDefault();
+    e.preventDefault();
 
-// Construir el objeto de datos para la solicitud JSON
-const data = {
-    username: "",
-    password: "",
-};
+    const data = {
+    username: username_log,
+    password: password_log,
+    };
 
-try {
-    const response = await fetch('/tu-api-de-inicio-de-sesion', {
+    try {
+    const response = await fetch('http://127.0.0.1:8000/iniciar_sesion', {
         method: 'POST',
         headers: {
         'Content-Type': 'application/json',
@@ -66,16 +72,62 @@ try {
     });
 
     if (response.ok) {
-        // Autenticación exitosa; redirigir a la página "publicar"
-        window.location.href = '/publicar'; // Cambia esto a tu URL deseada
-    } else {
-        // Autenticación fallida; maneja los errores según sea necesario
+
+        const responseData = await response.json();
+        const token = responseData.token;
+
+        localStorage.setItem('authToken', token);
+        console.log('Sesion iniciada, token recibido!');
+
+        // Realiza las acciones que necesites después del inicio de sesión exitoso
+        // Por ejemplo, redirige a una página protegida
+        // window.location.href = '/ruta-de-pagina-protegida'; // Cambia a tu URL deseada
+    } 
+    else {
         console.error('Error de inicio de sesión');
+    
     }
-} catch (error) {
-    console.error('Error de red', error);
-}
+    } catch (error) {
+        console.error('Error de red', error);
+    }
 };
+
+
+
+// Username para signup
+const [username_sig, setUsername_sig] = useState('');
+
+// Manejo de SignUp:
+const manejarRegistro = async (e: { preventDefault: () => void; }) => {
+    e.preventDefault();
+
+    const data = {
+        username: username_sig, 
+        password: password, 
+
+    };
+    
+    try {
+    const response = await fetch('http://127.0.0.1:8000/registrar_usuario', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+        console.log('Usuario registrado con éxito');
+
+    } else {
+        console.error('Error de registro');
+    }
+    } catch (error) {
+        console.error('Error de red', error);
+    }
+};
+
+
 
 //-----------------------------------------
 
@@ -160,6 +212,7 @@ return (
                         <div className='mb-4'>
                             <label htmlFor="nombreUsuario">Nombre de Usuario: </label><br />
                             <input id='nombreUsuario' type="text" placeholder='Ingrese su nombre de usuario'
+                                onChange={(e) => setUsername_log(e.target.value)}
                                 className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm' 
                             />
                         </div>
@@ -167,6 +220,7 @@ return (
                         <div>
                             <label htmlFor="contrasena">Contraseña: </label><br />
                             <input id='contrasena' type="password" placeholder='Ingrese su contraseña'
+                                onChange={(e) => setPassword_log(e.target.value)}
                                 className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm'
                             />
                         </div>
@@ -179,7 +233,7 @@ return (
 
                     </form>
                     <div className='mt-3'>
-                        <span className='text-sky-500 text-sm'>Aún no tienes cuenta? Pincha </span> 
+                        <span className='text-sky-500 text-sm'>Aún no tienes cuenta? Clickea </span> 
                         <Link href='' onClick={() => {irSignup();}} className='text-sm text-sky-500 font-bold hover:underline hover:decoration-solid'>
                             Aquí
                         </Link>
@@ -193,11 +247,11 @@ return (
         {isSignup && (
                 <div className='md:animate-fade-down md:animate-once'>
                     <div className=' bg-white text-slate-600 p-10 mt-[200px] shadow-[0_35px_60px_-5px_rgba(0,0,0,0.3)] rounded-md w-80'>
-                        <h1 className='text-center text-2xl mb-5 font-bold'>Registrate</h1>
-                        <form method="post" onSubmit={manejarLogin}>
+                        <h1 className='text-center text-2xl mb-5 font-bold'>Regístrate</h1>
+                        <form method="post" onSubmit={manejarRegistro}>
                             <div className='mb-4'>
                                 <label htmlFor="nombreUsuario_reg">Nombre de Usuario: </label><br />
-                                <input id='nombreUsuario_reg' type="text" placeholder='Ingrese un nombre de usuario'
+                                <input id='nombreUsuario_reg' type="text" placeholder='Ingrese un nombre de usuario' onChange={(e) => setUsername_sig(e.target.value)}
                                     className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm' 
                                 />
                             </div>
