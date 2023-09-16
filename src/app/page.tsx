@@ -1,296 +1,102 @@
 'use client'
 
 import Image from 'next/image'
-import { SetStateAction, useState } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 import Link from 'next/link';
+import NavbarInicio from './components/navbar_inicio';
 
 export default function Home() {
 
-// Token:
-const token = localStorage.getItem('authToken');
-
-// control de navbar en pantallas pequeñas
-const [menuOpen, setMenuOpen] = useState(false);
-const toggleMenu = () => {setMenuOpen(!menuOpen);};
-//-----------------------------------------
-
-// Control de visibilidad del login
-const [isLogin, mutarLogin] = useState(false);
-const loginTrue = () => {mutarLogin(true);};
-const loginFalse = () => {mutarLogin(false);};
-
-// Control de visibilidad inicio:
-const [isInicio, mutarInicio] = useState(true);
-const inicioTrue = () => {mutarInicio(true)};
-const inicioFalse = () => {mutarInicio(false)};
-
-// Control de visibilidad Signup:
-const [isSignup, mutarSignup] = useState(false);
-const signupTrue = () => {mutarSignup(true)};
-const signupFalse = () => {mutarSignup(false)};
-
-// Control de match en contraseñas
-const [password, setPassword] = useState('');
-const [confirmPassword, setConfirmPassword] = useState('');
-const [passwordsMatch, setPasswordsMatch] = useState(true);
-
-const manejarPassword = (e: { target: { value: SetStateAction<string>; }; }) => {
-const newPassword = e.target.value;
-setPassword(newPassword);
-if (newPassword == '') setPasswordsMatch(true);
-};
-
-const manejarConfirmPassword = (e: { target: { value: SetStateAction<string>; }; }) => {
-const newConfirmPassword = e.target.value;
-setConfirmPassword(newConfirmPassword);
-setPasswordsMatch(password === newConfirmPassword);
-if (newConfirmPassword == '') setPasswordsMatch(true);
-};
-
-
-// Username y Password para el Loggeo:
-const [username_log, setUsername_log] = useState('');
-const [password_log, setPassword_log] = useState('');
-
-// Manejo del loggeo
-
-const manejarLogin = async (e: { preventDefault: () => void; }) => {
-    e.preventDefault();
-
-    const data = {
-    username: username_log,
-    password: password_log,
-    };
-
-    try {
-    const response = await fetch('http://127.0.0.1:8000/iniciar_sesion', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-
-    if (response.ok) {
-
-        const responseData = await response.json();
-        const token = responseData.token;
-
-        localStorage.setItem('authToken', token);
-        console.log('Sesion iniciada, token recibido!');
-
-        // Realiza las acciones que necesites después del inicio de sesión exitoso
-        // Por ejemplo, redirige a una página protegida
-        // window.location.href = '/ruta-de-pagina-protegida'; // Cambia a tu URL deseada
-    } 
-    else {
-        console.error('Error de inicio de sesión');
-    
-    }
-    } catch (error) {
-        console.error('Error de red', error);
-    }
-};
-
-
-
-// Username para signup
-const [username_sig, setUsername_sig] = useState('');
-
-// Manejo de SignUp:
-const manejarRegistro = async (e: { preventDefault: () => void; }) => {
-    e.preventDefault();
-
-    const data = {
-        username: username_sig, 
-        password: password, 
-
-    };
-    
-    try {
-    const response = await fetch('http://127.0.0.1:8000/registrar_usuario', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-
-    if (response.ok) {
-        console.log('Usuario registrado con éxito');
-
-    } else {
-        console.error('Error de registro');
-    }
-    } catch (error) {
-        console.error('Error de red', error);
-    }
-};
-
 
 
 //-----------------------------------------
 
-// función para ocultar todos los elemenos
-// menos los del inicio
-const irLogin = () => {
-    inicioFalse();
-    signupFalse();
-    setTimeout(() => {
-        loginTrue();
-    }, 200); 
+// hook para almacenar las publicaciones
+const [publicaciones, setPublicaciones] = useState<any[]>([]);
 
-}
+// hook para mostrar publicaciones una vez cargadas
+const [mostrarPublicaciones, setMostrarPublicaciones] = useState(false);
 
-const irInicio = () => {
-    loginFalse();
-    signupFalse();
-    setTimeout(() => {
-        inicioTrue();
-    }, 200); 
-}
 
-const irSignup = () => {
-    inicioFalse();
-    loginFalse();
-    setTimeout(() => {
-        signupTrue();
-    }, 200); 
+// Traer publicaciones:
+const obtenerPublicaciones = async () => {
+try {
+    
+        const response = await fetch('http://127.0.0.1:8000/obtener_publicaciones', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            });
+        
+            if (response.ok) {
+                const data = await response.json();
+                setPublicaciones(data);
+        
+            } else {
+            console.error('Error al obtener las publicaciones');
+        }
+    
+} catch (error) {
+    console.error('Error de red:', error);
 }
+};
+
+// Mostrar las publicaciones después de 2 segundos
+// una vez cargadas
+useEffect(() => {
+    if (publicaciones.length === 0) {
+        obtenerPublicaciones();
+        setTimeout(
+            () => {
+                setMostrarPublicaciones(true);
+            },
+            200
+        )
+    }
+}, [publicaciones]);
 
 
 return (
     <main className="bg-white flex min-h-screen flex-col items-center justify-between p-15">
-        <nav className={`bg-black py-4 absolute inset-x-0 top-0 md:h-16 h-16`}>
-            <div className="container mx-auto flex items-center justify-between">
-                <div className="hover:animate-shake hover:animate-once text-white font-bold text-xl ml-10">
-                <Link href="/" onClick={() => window.location.reload()}>
-                    DeveloBlog  
-                </Link>
-                </div>
-                <ul className={`md:flex space-x-6 md:space-x-6 mr-10 hidden`}>
-                    <li><Link href='' onClick={irInicio} className={`text-white hover:underline ${isInicio ? 'underline' : ''}`}>Inicio</Link></li>
-                    <li><Link href='' onClick={irLogin} className={`text-white hover:underline ${isLogin ? 'underline' : ''}`}>Iniciar Sesión</Link></li>
-                </ul>
-                <Link
-                    href=''
-                    className="text-white text-xl md:hidden mr-5"
-                    onClick={() => {toggleMenu();}}
-                >
-                    <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M4 6h16M4 12h16M4 18h16"
-                    ></path>
-                    </svg>
-
-                </Link>
-            </div>
-        </nav>
-        {menuOpen && (
-        <div className={`${menuOpen ? 'animate-fade-left animate-once ' : ''} bg-black pb-3 pt-3 pl-3 pr-5 -mr-5 md:hidden text-white absolute top-16 text-left right-5 rounded-l-lg shadow-[0_50px_60px_-20px_rgba(0,0,0,0.5)]`}>
-            <ul className={`flex-col`}>
-                <li><Link href='' onClick={() => {irInicio();}} className={`text-white hover:underline ${isInicio ? 'underline' : ''}`}>Inicio</Link></li>
-                <li><Link href='' onClick={() =>  {irLogin();}} className={`text-white hover:underline ${isLogin ? 'underline' : ''}`}>Iniciar Sesión</Link></li>
-            </ul>
-        </div>
-        )}
-
-        {isLogin && (
-            <div className='md:animate-fade-down md:animate-once'>
-                    <div className=' bg-white text-slate-600 p-10 mt-[200px] shadow-[0_35px_60px_-5px_rgba(0,0,0,0.3)] rounded-md w-80'>
-                    <h1 className='text-center text-2xl mb-5 font-bold'>Iniciar Sesión</h1>
-                    <form method="post" onSubmit={manejarLogin}>
-                        <div className='mb-4'>
-                            <label htmlFor="nombreUsuario">Nombre de Usuario: </label><br />
-                            <input id='nombreUsuario' type="text" placeholder='Ingrese su nombre de usuario'
-                                onChange={(e) => setUsername_log(e.target.value)}
-                                className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm' 
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="contrasena">Contraseña: </label><br />
-                            <input id='contrasena' type="password" placeholder='Ingrese su contraseña'
-                                onChange={(e) => setPassword_log(e.target.value)}
-                                className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm'
-                            />
-                        </div>
-                        
-                        <button 
-                            type='submit'  
-                            className="transition duration-300 ease-in-out hover:scale-105 mt-5 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                            Ingresar
-                        </button>
-
-                    </form>
-                    <div className='mt-3'>
-                        <span className='text-sky-500 text-sm'>Aún no tienes cuenta? Clickea </span> 
-                        <Link href='' onClick={() => {irSignup();}} className='text-sm text-sky-500 font-bold hover:underline hover:decoration-solid'>
-                            Aquí
-                        </Link>
-                    </div>
-                
-
-                    </div>
-            </div>
-        )}
-
-        {isSignup && (
-                <div className='md:animate-fade-down md:animate-once'>
-                    <div className=' bg-white text-slate-600 p-10 mt-[200px] shadow-[0_35px_60px_-5px_rgba(0,0,0,0.3)] rounded-md w-80'>
-                        <h1 className='text-center text-2xl mb-5 font-bold'>Regístrate</h1>
-                        <form method="post" onSubmit={manejarRegistro}>
-                            <div className='mb-4'>
-                                <label htmlFor="nombreUsuario_reg">Nombre de Usuario: </label><br />
-                                <input id='nombreUsuario_reg' type="text" placeholder='Ingrese un nombre de usuario' onChange={(e) => setUsername_sig(e.target.value)}
-                                    className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm' 
-                                />
+        
+        <NavbarInicio></NavbarInicio>
+        {mostrarPublicaciones && (
+            <div className='mt-[100px] md:mt-[100px] text-black p-10 shadow-[0_35px_60px_-5px_rgba(0,0,0,0.3)] rounded-md'>
+                <h1 className=' text-xl md:text-2xl font-bold text-cyan-500'>&lt;Publicaciones/&gt;</h1><br />
+                <p></p>
+                    <ul>
+                        {publicaciones.slice(0, 5).map((publicacion) => (
+                        <li key={publicacion.id}>
+                            <div className=' pr-10 w-64 md:w-[700px] text-sm md:text-base animate-fade-down animate-once'>
+                                <p><span className='text-teal-500'>@</span>{publicacion.autor_publicacion}</p>
                             </div>
-                            {!passwordsMatch && (
-                            <p className="text-red-500 text-sm">Las contraseñas no coinciden</p>
-                            )}
-                            <div className='mb-4'>
-                                <label htmlFor="contrasena_reg">Contraseña: </label><br />
-                                <input id='contrasena_reg' type="password" placeholder='Ingrese una contraseña' onChange={manejarPassword}
-                                    className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm'
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="rep_contrasena">Repetir contraseña: </label><br />
-                                <input id='rep_contrasena' type="password" placeholder='Repita la contraseña' onChange={manejarConfirmPassword}
-                                    className='transition duration-300 ease-in-out ring-[0.5px] ring-slate-500 w-full mt-2 rounded-md p-1.5 focus:ring focus:ring-blue-500 outline-0 text-black text-sm placeholder:text-sm'
-                                />
+                            <button 
+                            className='animate-fade-down animate-once duration-300 border border-sky-500 text-sm md:text-base p-3 rounded-md w-80 md:w-[700px] text-left hover:shadow-lg hover:shadow-indigo-500/20'>
+                                <p >{publicacion.asunto}</p>
+                            </button>
+                            <div className='flex p-2'>   
+                                <p>{publicacion.likes}</p>
+                                <button>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6 ml-[5px] hover:fill-[#a9f6ff]">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
+                                    </svg>
+                                </button>
+                                <button>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6 ml-[5px] hover:fill-[#fd6969]">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 15h2.25m8.024-9.75c.011.05.028.1.052.148.591 1.2.924 2.55.924 3.977a8.96 8.96 0 01-.999 4.125m.023-8.25c-.076-.365.183-.75.575-.75h.908c.889 0 1.713.518 1.972 1.368.339 1.11.521 2.287.521 3.507 0 1.553-.295 3.036-.831 4.398C20.613 14.547 19.833 15 19 15h-1.053c-.472 0-.745-.556-.5-.96a8.95 8.95 0 00.303-.54m.023-8.25H16.48a4.5 4.5 0 01-1.423-.23l-3.114-1.04a4.5 4.5 0 00-1.423-.23H6.504c-.618 0-1.217.247-1.605.729A11.95 11.95 0 002.25 12c0 .434.023.863.068 1.285C2.427 14.306 3.346 15 4.372 15h3.126c.618 0 .991.724.725 1.282A7.471 7.471 0 007.5 19.5a2.25 2.25 0 002.25 2.25.75.75 0 00.75-.75v-.633c0-.573.11-1.14.322-1.672.304-.76.93-1.33 1.653-1.715a9.04 9.04 0 002.86-2.4c.498-.634 1.226-1.08 2.032-1.08h.384" />
+                                    </svg>
+                                </button>
                             </div>
                             
-                            <button 
-                                type='submit'
-
-                                className="transition duration-300 ease-in-out hover:scale-105 mt-5 flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                Registrarse
-                            </button>
-
-                        </form>
-
-                    </div>
-                </div>
-
+                            <br />
+                        </li>
+                        ))}
+                    </ul>
+            </div>
         )}
 
 
-
-    
-    
-    
     </main>
 )
 }
